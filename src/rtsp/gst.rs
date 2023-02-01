@@ -129,7 +129,9 @@ impl GstOutputs {
                 "! queue silent=true max-size-bytes=10485760  min-threshold-bytes=1024 ! h264parse ! rtph264pay name=pay0"
             }
             Some(StreamFormat::H265) => {
-                "! queue silent=true  max-size-bytes=10485760  min-threshold-bytes=1024 ! h265parse ! rtph265pay name=pay0"
+                // "! queue silent=true  max-size-bytes=10485760  min-threshold-bytes=1024 ! h265parse ! rtph265pay name=pay0"
+                // transcode h265 to h264 on-the-fly ( may need to play with the additional parameters a little bit ;) )
+                "! queue silent=true  max-size-bytes=10485760  min-threshold-bytes=1024 ! h265parse ! omxh265dec ! omxh264enc ! h264parse ! queue ! rtph264pay name=pay0"
             }
             _ => "! fakesink",
         };
@@ -138,7 +140,7 @@ impl GstOutputs {
             Some(StreamFormat::Adpcm(block_size)) => format!("caps=audio/x-adpcm,layout=dvi,block_align={},channels=1,rate=8000 ! queue silent=true max-size-bytes=10485760 min-threshold-bytes=1024 ! adpcmdec  ! audioconvert ! rtpL16pay name=pay1", block_size), // DVI4 is converted to pcm in the appsrc
             Some(StreamFormat::Aac) => "! queue silent=true max-size-bytes=10485760 min-threshold-bytes=1024 ! aacparse ! decodebin ! audioconvert ! rtpL16pay name=pay1 name=pay1".to_string(),
             _ => "! fakesink".to_string(),
-        };
+        };  
 
         self.factory.set_launch(
             &vec![
